@@ -1,0 +1,21 @@
+/* Global baseline — component styles are scoped inside App.jsx */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: #080a09;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+}
