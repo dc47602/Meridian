@@ -99,12 +99,10 @@ meridian/
 ├── vercel.json         # Vercel SPA routing
 ├── package.json
 ├── .gitignore
-├── public/
-│   └── favicon.svg     # Meridian compass favicon
-└── src/
-    ├── main.jsx        # React entry — mounts App
-    ├── index.css       # Global CSS reset
-    └── App.jsx         # Entire blog (single component file)
+├──favicon.svg     # Meridian compass favicon
+├── main.jsx        # React entry — mounts App
+├── index.css       # Global CSS reset
+└── App.jsx         # Entire blog (single component file)
 ```
 
 ---
