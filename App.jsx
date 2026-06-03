@@ -390,14 +390,14 @@ const POSTS = [
 ];
 
 const DESTINATIONS = [
-  {region:"South America",name:"Patagonia",count:"4 stories",num:"01"},
-  {region:"East Asia",name:"Japan",count:"6 stories",num:"02"},
-  {region:"North Africa",name:"Morocco",count:"3 stories",num:"03"},
-  {region:"North Atlantic",name:"Iceland",count:"2 stories",num:"04"},
-  {region:"South Asia",name:"India",count:"5 stories",num:"05"},
-  {region:"East Africa",name:"Ethiopia",count:"2 stories",num:"06"},
-  {region:"Southeast Asia",name:"Vietnam",count:"4 stories",num:"07"},
-  {region:"Southern Europe",name:"Portugal",count:"3 stories",num:"08"},
+  {region:"India",name:"Tadoba",count:"1 stories",num:"01"},
+  {region:"India",name:"Pench",count:"1 stories",num:"02"},
+  {region:"India",name:"Goa",count:"3 stories",num:"03"},
+  {region:"India",name:"Tirupati",count:"2 stories",num:"04"},
+  {region:"India",name:"Haridwar",count:"1 stories",num:"05"},
+  {region:"India",name:"Vrindavan",count:"1 stories",num:"06"},
+  {region:"India",name:"Rishikesh",count:"1 stories",num:"07"},
+  {region:"India",name:"Agra",count:"1 stories",num:"08"},
 ];
 
 // Photo journal data — using gradient swatches as photo placeholders
