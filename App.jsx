@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { POSTS, DESTINATIONS, PHOTOS, SOCIAL_POSTS, ROUTES, QUICK_PROMPTS } from "./data/blogdata.js";
 
+// ─── STYLES ───────────────────────────────────────────────────────────────────
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap');
 
@@ -124,7 +126,6 @@ const CSS = `
   /* LIGHTBOX */
   .lightbox { position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.95); display:flex; align-items:center; justify-content:center; animation:fadeIn .25s ease; }
   .lightbox-inner { max-width:900px; width:90%; position:relative; }
-  .lightbox-img { width:100%; border-radius:1px; display:block; }
   .lightbox-close { position:absolute; top:-2.5rem; right:0; background:none; border:none; color:var(--muted); cursor:pointer; font-size:1.2rem; font-family:'Syne',sans-serif; letter-spacing:.1em; transition:color .2s; }
   .lightbox-close:hover { color:var(--text); }
   .lightbox-meta { margin-top:1.2rem; display:flex; justify-content:space-between; align-items:flex-end; }
@@ -134,26 +135,24 @@ const CSS = `
   .lnav-btn { background:var(--surface); border:1px solid var(--border); color:var(--muted); cursor:pointer; padding:.5rem 1.2rem; font-family:'Syne',sans-serif; font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; border-radius:1px; transition:all .2s; }
   .lnav-btn:hover { color:var(--text); border-color:var(--border-bright); }
 
-  /* ── SOCIAL STORIES ── */
+  /* ── SOCIAL ── */
   .social-page { padding-top:60px; }
   .social-hero { padding:5rem 3rem 3rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:flex-end; gap:2rem; flex-wrap:wrap; }
-  .social-platform-tabs { display:flex; gap:0; border:1px solid var(--border); border-radius:2px; overflow:hidden; }
+  .social-platform-tabs { display:flex; border:1px solid var(--border); border-radius:2px; overflow:hidden; }
   .platform-tab { font-family:'Syne',sans-serif; font-size:.62rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; background:transparent; color:var(--ghost); border:none; padding:.6rem 1.2rem; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:.5rem; }
   .platform-tab:hover:not(.active) { background:var(--raised); color:var(--muted); }
   .platform-tab.active.ig { background:var(--ig); color:white; }
   .platform-tab.active.tw { background:var(--tw); color:white; }
   .platform-tab.active.yt { background:var(--yt); color:white; }
   .platform-tab.active.all { background:var(--accent); color:var(--void); }
-  .social-stats-bar { display:flex; gap:0; border-bottom:1px solid var(--border); background:var(--deep); }
+  .social-stats-bar { display:flex; border-bottom:1px solid var(--border); background:var(--deep); }
   .social-stat { padding:1.5rem 2.5rem; border-right:1px solid var(--border); display:flex; align-items:center; gap:1rem; }
   .social-stat:last-child { border-right:none; }
   .social-stat-icon { font-size:1.2rem; }
   .social-stat-val { font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:300; line-height:1; }
   .social-stat-label { font-family:'JetBrains Mono',monospace; font-size:.55rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ghost); margin-top:.15rem; }
-
-  /* Social feed */
   .social-feed { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); }
-  .social-card { background:var(--void); position:relative; cursor:pointer; transition:background .2s; overflow:hidden; }
+  .social-card { background:var(--void); cursor:pointer; transition:background .2s; overflow:hidden; }
   .social-card:hover { background:var(--deep); }
   .social-card:hover .sc-media { transform:scale(1.03); }
   .sc-media-wrap { aspect-ratio:1; overflow:hidden; position:relative; }
@@ -164,21 +163,15 @@ const CSS = `
   .sc-platform-badge.yt { background:var(--yt); }
   .sc-body { padding:1.5rem; border-top:1px solid var(--border); }
   .sc-handle { font-family:'JetBrains Mono',monospace; font-size:.58rem; letter-spacing:.1em; text-transform:uppercase; margin-bottom:.6rem; display:flex; align-items:center; gap:.5rem; }
-  .sc-handle.ig { color:var(--ig); }
-  .sc-handle.tw { color:var(--tw); }
-  .sc-handle.yt { color:var(--yt); }
+  .sc-handle.ig { color:var(--ig); } .sc-handle.tw { color:var(--tw); } .sc-handle.yt { color:var(--yt); }
   .sc-text { font-family:'Cormorant Garamond',serif; font-size:.95rem; line-height:1.65; color:var(--muted); margin-bottom:1rem; }
-  .sc-text strong { color:var(--text); font-weight:600; }
   .sc-hashtags { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:.9rem; }
   .sc-hashtag { font-family:'JetBrains Mono',monospace; font-size:.55rem; letter-spacing:.08em; color:var(--ghost); background:var(--surface); border:1px solid var(--border); padding:2px 7px; border-radius:2px; }
   .sc-footer { display:flex; justify-content:space-between; align-items:center; padding-top:.8rem; border-top:1px solid var(--border); }
   .sc-engagement { display:flex; gap:1.2rem; font-family:'JetBrains Mono',monospace; font-size:.58rem; color:var(--ghost); }
-  .sc-engagement span { display:flex; align-items:center; gap:.3rem; }
-  .sc-date { font-family:'JetBrains Mono',monospace; font-size:.55rem; color:var(--ghost); letter-spacing:.08em; }
+  .sc-date { font-family:'JetBrains Mono',monospace; font-size:.55rem; color:var(--ghost); }
   .sc-blog-link { font-family:'Syne',sans-serif; font-size:.58rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); background:var(--accent-dim); border:1px solid rgba(212,168,83,.25); padding:3px 10px; border-radius:1px; cursor:pointer; transition:all .2s; white-space:nowrap; }
   .sc-blog-link:hover { background:rgba(212,168,83,.25); }
-
-  /* Featured social story */
   .social-featured { display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--border); background:var(--deep); }
   .sf-visual { padding:3rem; display:flex; align-items:center; justify-content:center; border-right:1px solid var(--border); font-size:6rem; background:linear-gradient(135deg,#1a2420,#080a09); position:relative; overflow:hidden; }
   .sf-content { padding:3rem; display:flex; flex-direction:column; justify-content:center; }
@@ -187,9 +180,9 @@ const CSS = `
   .sf-text { font-size:.95rem; color:var(--muted); line-height:1.75; margin-bottom:1.5rem; font-family:'Cormorant Garamond',serif; }
   .sf-numbers { display:flex; gap:2rem; margin-bottom:1.5rem; }
   .sf-num-item { font-family:'JetBrains Mono',monospace; font-size:.6rem; color:var(--ghost); }
-  .sf-num-item strong { display:block; font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:600; color:var(--text); font-family:'Cormorant Garamond',serif; }
+  .sf-num-item strong { display:block; font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:600; color:var(--text); }
 
-  /* ── ABOUT ME ── */
+  /* ── ABOUT ── */
   .about-hero { padding-top:60px; display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid var(--border); min-height:70vh; }
   .about-hero-left { padding:7rem 4rem 5rem; display:flex; flex-direction:column; justify-content:center; border-right:1px solid var(--border); }
   .about-hero-right { position:relative; overflow:hidden; background:linear-gradient(135deg,#101a14,#080a09); display:flex; align-items:center; justify-content:center; }
@@ -264,8 +257,7 @@ const CSS = `
   .rstat-label { font-family:'JetBrains Mono',monospace; font-size:.58rem; letter-spacing:.12em; text-transform:uppercase; color:var(--ghost); margin-bottom:.3rem; }
   .rstat-val { font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:600; line-height:1; }
   .rstat-delta { font-family:'JetBrains Mono',monospace; font-size:.58rem; margin-top:.2rem; }
-  .rstat-delta.better { color:var(--pine); }
-  .rstat-delta.worse { color:var(--rust); }
+  .rstat-delta.better { color:var(--pine); } .rstat-delta.worse { color:var(--rust); }
   .route-diff-banner { margin:1.2rem 1.5rem; background:rgba(74,140,106,.08); border-left:2px solid var(--pine); padding:.9rem 1rem; border-radius:0 2px 2px 0; }
   .route-diff-banner.negative { background:rgba(196,82,48,.08); border-left-color:var(--rust); }
   .route-diff-title { font-family:'Syne',sans-serif; font-size:.6rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--pine); margin-bottom:.4rem; }
@@ -380,84 +372,6 @@ const CSS = `
   }
 `;
 
-// ─── DATA ─────────────────────────────────────────────────────────────────────
-const POSTS = [
-  { id:1, tag:"South America · Trekking", title:"Forty Hours in Patagonia Without a Plan", excerpt:"The wind arrived before we did. By the time our boots touched the first trail, it had already stripped the clouds from the Cuernos and left us standing under an impossible sky.", author:"S. Mehrotra", date:"Apr 14, 2025", readTime:"11 min", gradient:"linear-gradient(135deg,#1a2e2a,#0d1a15)", body:[{type:"p",text:"The wind arrived before we did. By the time our boots touched the first switchback below Mirador Las Torres, it had already stripped the clouds from the Cuernos and left us standing under an impossible sky."},{type:"blockquote",text:"Patagonia doesn't ask permission. It arrives, rearranges your plans, and dares you to be grateful."},{type:"h2",text:"The First Morning"},{type:"p",text:"We had no itinerary. This was the plan: arrive in Puerto Natales, buy two days of food, and see what the mountain gives you. It gave us low cloud on day one."}] },
-  { id:2, tag:"Japan · Cities", title:"Kyoto in the Hour Before the Tourists Wake", excerpt:"There's a Kyoto that exists only between 5 and 7am, when the lanterns are still lit and the stone paths are swept but empty.", author:"R. Aoki", date:"Mar 28, 2025", readTime:"8 min", gradient:"linear-gradient(135deg,#2a1a1a,#1a0d0d)", body:[{type:"p",text:"There's a Kyoto that exists only between 5 and 7am. The lanterns along Ninenzaka are still lit, the stone paths swept but empty."},{type:"blockquote",text:"Kyoto in the early hours is not scenic — it is somehow actual."}] },
-  { id:3, tag:"Morocco · Culture", title:"The Medina at Midnight: Fes Without a Map", excerpt:"Getting lost is the point. The 9,000 streets of Fes el-Bali were not designed to be navigated.", author:"L. Arnault", date:"Feb 11, 2025", readTime:"9 min", gradient:"linear-gradient(135deg,#2a2010,#1a1208)", body:[{type:"p",text:"Getting lost is the point. The 9,000 streets of Fes el-Bali were not designed to be navigated — they were designed to be lived in."},{type:"blockquote",text:"The tannery at night smells of saffron and something ancient."}] },
-  { id:4, tag:"Iceland · Photography", title:"Chasing Light on the Snæfellsnes Peninsula", excerpt:"The golden hour in Iceland in summer lasts four hours. You run out of memory cards before you run out of light.", author:"T. Bergsson", date:"Jan 05, 2025", readTime:"6 min", gradient:"linear-gradient(135deg,#0d1a26,#060e16)", body:[{type:"p",text:"The golden hour in Iceland in summer lasts four hours. By the time you've driven the Snæfellsnes ring road once, the light has done three completely different things to the same glacier."}] },
-  { id:5, tag:"India · Food", title:"A Street Food Pilgrimage Through Old Delhi", excerpt:"The parathe walas of Chandni Chowk have been making the same eight types of bread since 1875.", author:"M. Kapoor", date:"Dec 19, 2024", readTime:"10 min", gradient:"linear-gradient(135deg,#261a0d,#160e06)", body:[{type:"p",text:"The parathe walas of Chandni Chowk have been making the same eight types of bread since 1875."}] },
-];
-
-const DESTINATIONS = [
-  {region:"India",name:"Tadoba",count:"1 stories",num:"01"},
-  {region:"India",name:"Pench",count:"1 stories",num:"02"},
-  {region:"India",name:"Goa",count:"3 stories",num:"03"},
-  {region:"India",name:"Tirupati",count:"2 stories",num:"04"},
-  {region:"India",name:"Haridwar",count:"1 stories",num:"05"},
-  {region:"India",name:"Vrindavan",count:"1 stories",num:"06"},
-  {region:"India",name:"Rishikesh",count:"1 stories",num:"07"},
-  {region:"India",name:"Agra",count:"1 stories",num:"08"},
-];
-
-// Photo journal data — using gradient swatches as photo placeholders
-const PHOTOS = [
-  { id:1, emoji:"🏔️", bg:"linear-gradient(135deg,#1a3a2a 0%,#0d1e14 100%)", tag:"Patagonia", title:"First light on the Torres", meta:"Sony A7IV · f/8 · 1/250s", location:"Torres del Paine, Chile", date:"Apr 2025", tall:true },
-  { id:2, emoji:"⛩️", bg:"linear-gradient(135deg,#2a1515 0%,#100808 100%)", tag:"Kyoto", title:"Fushimi Inari at 5am", meta:"Sony A7IV · f/4 · 1/60s", location:"Kyoto, Japan", date:"Mar 2025", tall:false },
-  { id:3, emoji:"🌅", bg:"linear-gradient(135deg,#2a1f0d 0%,#140e04 100%)", tag:"Morocco", title:"Golden hour, Fes el-Bali", meta:"Sony A7IV · f/5.6 · 1/400s", location:"Fes, Morocco", date:"Feb 2025", tall:false },
-  { id:4, emoji:"🧊", bg:"linear-gradient(135deg,#0d1e2e 0%,#060e16 100%)", tag:"Iceland", title:"Grey glacier terminus", meta:"Sony A7IV · f/11 · 1/500s", location:"Snæfellsnes, Iceland", date:"Jan 2025", tall:true },
-  { id:5, emoji:"🍛", bg:"linear-gradient(135deg,#2a180a 0%,#140a04 100%)", tag:"India", title:"Chandni Chowk morning", meta:"Sony A7IV · f/2.8 · 1/200s", location:"Old Delhi, India", date:"Dec 2024", tall:false },
-  { id:6, emoji:"🌿", bg:"linear-gradient(135deg,#0e2018 0%,#060f0b 100%)", tag:"Vietnam", title:"Terraced rice fields", meta:"Sony A7IV · f/8 · 1/320s", location:"Sapa, Vietnam", date:"Nov 2024", tall:false },
-  { id:7, emoji:"🏛️", bg:"linear-gradient(135deg,#201510 0%,#100804 100%)", tag:"Ethiopia", title:"Rock-hewn churches", meta:"Sony A7IV · f/4 · 1/100s", location:"Lalibela, Ethiopia", date:"Oct 2024", tall:true },
-  { id:8, emoji:"🌊", bg:"linear-gradient(135deg,#0a1a28 0%,#050d14 100%)", tag:"Portugal", title:"Atlantic coast at dusk", meta:"Sony A7IV · f/8 · 1/800s", location:"Nazaré, Portugal", date:"Sep 2024", tall:false },
-  { id:9, emoji:"🦙", bg:"linear-gradient(135deg,#1e2a18 0%,#0c1308 100%)", tag:"Patagonia", title:"Guanaco at Valle del Francés", meta:"Sony A7IV · f/5.6 · 1/640s", location:"Torres del Paine, Chile", date:"Apr 2025", tall:false },
-  { id:10, emoji:"🏯", bg:"linear-gradient(135deg,#2a1818 0%,#120a0a 100%)", tag:"Japan", title:"Himeji Castle at dusk", meta:"Sony A7IV · f/8 · 1/100s", location:"Himeji, Japan", date:"Mar 2025", tall:false },
-  { id:11, emoji:"🐪", bg:"linear-gradient(135deg,#2e1e08 0%,#150e04 100%)", tag:"Morocco", title:"Sahara edge, near Merzouga", meta:"Sony A7IV · f/16 · 1/1000s", location:"Merzouga, Morocco", date:"Feb 2025", tall:true },
-  { id:12, emoji:"🌋", bg:"linear-gradient(135deg,#0f1820 0%,#06090e 100%)", tag:"Iceland", title:"Volcanic lava field", meta:"Sony A7IV · f/11 · 1/250s", location:"Reykjanes, Iceland", date:"Jan 2025", tall:false },
-];
-
-// Social stories data
-const SOCIAL_POSTS = [
-  { id:1, platform:"ig", handle:"@meridian.journal", emoji:"🏔️", bg:"linear-gradient(135deg,#1a3a2a,#0d1e14)", text:"The Torres at 6am — three granite spires, zero other humans. Spent two nights at Chileno just to wake up to this. No filter, no crop. The real thing is always better.", hashtags:["#patagonia","#chile","#trekking","#travelphotography"], likes:"12.4K", comments:"284", date:"Apr 14", linkedPost:1, featured:true },
-  { id:2, platform:"tw", handle:"@meridian_journal", emoji:"🧵", bg:"linear-gradient(135deg,#0d1520,#060c14)", text:"Thread: 7 things nobody tells you before doing the Torres del Paine W Circuit (1/7) — The booking system is completely broken. You'll be fine anyway.", hashtags:["#patagonia","#traveltips"], likes:"2.1K", comments:"156", date:"Apr 10", linkedPost:1 },
-  { id:3, platform:"yt", handle:"Meridian Journal", emoji:"🎬", bg:"linear-gradient(135deg,#200a0a,#0e0404)", text:"NEW VIDEO: 48 hours in Fes Medina without a guide — what we found vs. what the guidebooks say. 22 minutes. No drone footage.", hashtags:["#morocco","#fes","#travel"], likes:"8.7K", comments:"412", date:"Mar 5", linkedPost:3 },
-  { id:4, platform:"ig", handle:"@meridian.journal", emoji:"⛩️", bg:"linear-gradient(135deg,#2a1515,#100808)", text:"Fushimi Inari at 4:50am. We were the third group here. By 7am there were tour buses. The math is simple: wake up earlier than you're comfortable with.", hashtags:["#kyoto","#japan","#earlybird","#temples"], likes:"9.8K", comments:"198", date:"Mar 28", linkedPost:2 },
-  { id:5, platform:"tw", handle:"@meridian_journal", emoji:"📸", bg:"linear-gradient(135deg,#1a180a,#0e0c04)", text:"The Sony A7IV is overkill for travel photography in the best way. Entire Iceland trip, 4,200 shots, 60+ keepers. The ones that didn't work are entirely my fault.", hashtags:["#gear","#photography","#iceland"], likes:"1.8K", comments:"97", date:"Jan 12", linkedPost:4 },
-  { id:6, platform:"ig", handle:"@meridian.journal", emoji:"🌅", bg:"linear-gradient(135deg,#2a1f0d,#140e04)", text:"Roof terrace, Fes medina, 5:30pm. The call to prayer from six different minarets simultaneously. Every time I've heard it in a crowded city it stops me completely.", hashtags:["#morocco","#fes","#medina","#travel"], likes:"14.2K", comments:"341", date:"Feb 11", linkedPost:3 },
-];
-
-const ROUTES = [
-  { id:"r1", num:"01", title:"Torres del Paine Circuit", region:"Patagonia, Chile", mode:"🥾 Trek", date:"Apr 2025", live:true,
-    taken:{distance:"112 km",duration:"9 days",elevation:"+4,820 m",waypoints:["Puerto Natales","Refugio Chileno","Mirador Las Torres","Campamento Italiano","Grey Glacier","Puerto Natales"]},
-    best:{distance:"98 km",duration:"8 days",elevation:"+4,100 m",waypoints:["Puerto Natales","Mirador Las Torres","Valle del Francés","Grey Glacier","Puerto Natales"]},
-    diff:{time:"−1 day",distance:"−14 km",note:"Skipping the less-scenic northern loop saves a full day. W Circuit fully open, no snow."},
-    conditions:[{color:"#4a8c6a",text:"W Circuit fully open — no closures (Apr 2025)"},{color:"#d4a853",text:"Grey Glacier: 2hr wait at suspension bridge on weekends"},{color:"#4a8c6a",text:"Refugios have availability — no advance booking needed"}],
-    paths:{taken:"M 100 360 C 112 330 128 302 142 278 C 156 254 160 232 166 210 C 172 188 180 170 192 154 C 206 136 224 126 236 112 C 250 96 256 78 248 62 C 240 46 222 40 208 48 C 194 56 188 74 192 92 C 196 110 210 122 222 134 C 236 148 244 164 240 182 C 236 200 220 212 206 224 C 192 236 180 250 170 266 C 160 282 152 300 145 316 C 138 332 130 346 120 356 C 110 366 98 370 88 364",best:"M 100 360 C 115 332 133 306 150 282 C 167 258 172 236 178 212 C 184 188 192 170 204 154 C 218 136 234 126 244 112 C 256 96 260 78 250 64 C 240 50 222 44 208 53 C 194 62 190 80 195 98 C 200 116 214 128 225 140 C 237 154 244 170 240 188 C 236 206 220 216 206 228 C 192 240 179 255 170 272 C 161 289 154 307 148 323 C 142 339 136 353 126 361 C 116 369 103 370 95 363"},
-    pois:[{x:100,y:360,label:"Puerto Natales",type:"start"},{x:248,y:62,label:"Las Torres",type:"peak"},{x:206,y:224,label:"Valle Francés",type:"stop"},{x:88,y:364,label:"Grey Glacier",type:"stop"}] },
-  { id:"r2", num:"02", title:"Kyoto Heritage Walk", region:"Kyoto, Japan", mode:"🚶 Walk", date:"Mar 2025", live:false,
-    taken:{distance:"22 km",duration:"2 days",elevation:"+680 m",waypoints:["Fushimi Inari","Tofukuji","Gion","Kinkakuji","Arashiyama"]},
-    best:{distance:"18 km",duration:"1.5 days",elevation:"+520 m",waypoints:["Fushimi Inari (5am)","Ninenzaka","Gion Alley","Arashiyama"]},
-    diff:{time:"−half day",distance:"−4 km",note:"The Kinkakuji detour adds 2 hours for a site best seen later. Tofukuji to Ninenzaka is more scenic."},
-    conditions:[{color:"#d4a853",text:"Cherry blossom: crowds at Arashiyama from 9am"},{color:"#4a8c6a",text:"Fushimi Inari summit: ~90 min from base"}],
-    paths:{taken:"M 80 350 C 95 320 115 295 132 272 C 149 249 156 228 166 208 C 176 188 184 170 196 155 C 210 138 226 130 236 116 C 248 100 250 82 242 68 C 234 54 217 50 204 59 C 191 68 188 86 193 104 C 198 122 212 132 223 144 C 236 158 240 176 234 192 C 228 208 212 217 199 228 C 185 240 176 256 168 273 C 160 290 154 308 149 325",best:"M 80 350 C 98 322 120 298 140 276 C 160 254 167 232 175 210 C 183 188 193 172 205 157 C 218 141 234 133 243 119 C 253 103 253 84 244 70 C 235 56 217 52 204 62 C 191 72 189 90 195 108 C 201 126 215 136 225 148 C 237 162 241 180 234 196 C 227 212 211 220 198 232 C 184 244 175 260 167 277 C 159 294 153 312 148 328"},
-    pois:[{x:80,y:350,label:"Fushimi Inari",type:"start"},{x:242,y:68,label:"Summit",type:"peak"},{x:199,y:228,label:"Gion",type:"stop"},{x:149,y:325,label:"Arashiyama",type:"stop"}] },
-  { id:"r3", num:"03", title:"Fes Medina Deep Dive", region:"Fes el-Bali, Morocco", mode:"🚶 Walk", date:"Feb 2025", live:false,
-    taken:{distance:"8 km",duration:"1 day",elevation:"+320 m",waypoints:["Bab Bou Jeloud","Madrasa Bou Inania","Chouara Tannery","Al-Qarawiyyin","Nejjarine"]},
-    best:{distance:"6 km",duration:"1 day",elevation:"+240 m",waypoints:["Bab Bou Jeloud","Chouara Tannery (9am)","Al-Qarawiyyin","Nejjarine"]},
-    diff:{time:"Same day",distance:"−2 km",note:"Arrive at the tannery at 9am for best light. Al-Qarawiyyin is more rewarding than the Madrasa."},
-    conditions:[{color:"#4a8c6a",text:"Tannery viewpoint free from leather shops above"},{color:"#c45230",text:"Friday: Al-Qarawiyyin closed to visitors"}],
-    paths:{taken:"M 110 320 C 124 298 140 276 156 255 C 172 234 178 214 186 194 C 194 174 202 157 214 143 C 227 128 243 122 252 108 C 263 93 264 76 255 64 C 246 52 229 50 216 59 C 203 68 200 86 205 104 C 210 122 224 132 234 145 C 245 160 249 178 243 194 C 237 210 221 219 208 231 C 194 244 184 259 175 274 C 166 289 158 306 152 321",best:"M 110 320 C 126 300 144 279 162 258 C 180 237 186 216 193 194 C 200 172 210 156 222 142 C 235 126 250 120 259 106 C 269 90 268 73 258 61 C 248 49 231 48 218 58 C 205 68 203 87 209 105 C 215 123 228 133 238 146 C 249 161 252 179 245 195 C 238 211 222 220 209 232 C 195 245 185 260 176 276 C 167 292 160 308 154 323"},
-    pois:[{x:110,y:320,label:"Bab Bou Jeloud",type:"start"},{x:255,y:64,label:"Chouara Tannery",type:"peak"},{x:208,y:231,label:"Al-Qarawiyyin",type:"stop"},{x:152,y:321,label:"Nejjarine",type:"stop"}] },
-];
-
-const QUICK_PROMPTS = [
-  "Write an atmospheric opening paragraph for my destination",
-  "Suggest a vivid sensory detail to add",
-  "Help me write a compelling blockquote",
-  "Improve the flow of my draft",
-  "Suggest a title that evokes a strong sense of place",
-];
-
 // ─── GEO SVG ──────────────────────────────────────────────────────────────────
 function GeoSVG() {
   return (
@@ -469,23 +383,33 @@ function GeoSVG() {
       <line x1="300" y1="50" x2="300" y2="550" stroke="currentColor" strokeWidth="0.5"/>
       <line x1="120" y1="120" x2="480" y2="480" stroke="currentColor" strokeWidth="0.5"/>
       <line x1="480" y1="120" x2="120" y2="480" stroke="currentColor" strokeWidth="0.5"/>
-      {[0,30,60,90,120,150,180,210,240,270,300,330].map(a=>{const r=a*Math.PI/180;return<line key={a} x1={300+250*Math.cos(r)} y1={300+250*Math.sin(r)} x2={300+180*Math.cos(r)} y2={300+180*Math.sin(r)} stroke="currentColor" strokeWidth="0.5"/>})}
+      {[0,30,60,90,120,150,180,210,240,270,300,330].map(a => {
+        const r = a * Math.PI / 180;
+        return <line key={a} x1={300+250*Math.cos(r)} y1={300+250*Math.sin(r)} x2={300+180*Math.cos(r)} y2={300+180*Math.sin(r)} stroke="currentColor" strokeWidth="0.5"/>;
+      })}
       <polygon points="300,80 520,420 80,420" stroke="currentColor" strokeWidth="0.5" fill="none"/>
     </svg>
   );
 }
 
 // ─── ROUTE MAP SVG ────────────────────────────────────────────────────────────
-function RouteMapSVG({route,mode}) {
-  const showTaken=mode==="taken"||mode==="both", showBest=mode==="best"||mode==="both";
+function RouteMapSVG({ route, mode }) {
+  const showTaken = mode === "taken" || mode === "both";
+  const showBest  = mode === "best"  || mode === "both";
   return (
     <svg viewBox="0 0 380 420" style={{width:"100%",height:"100%",background:"#090c0a"}}>
-      {[80,160,240,320].map(x=><line key={`v${x}`} x1={x} y1="0" x2={x} y2="420" stroke="rgba(255,255,255,0.025)" strokeWidth="1"/>)}
-      {[80,160,240,320,400].map(y=><line key={`h${y}`} x1="0" y1={y} x2="380" y2={y} stroke="rgba(255,255,255,0.025)" strokeWidth="1"/>)}
+      {[80,160,240,320].map(x => <line key={`v${x}`} x1={x} y1="0" x2={x} y2="420" stroke="rgba(255,255,255,0.025)" strokeWidth="1"/>)}
+      {[80,160,240,320,400].map(y => <line key={`h${y}`} x1="0" y1={y} x2="380" y2={y} stroke="rgba(255,255,255,0.025)" strokeWidth="1"/>)}
       <path d="M 0 400 C 60 380 100 350 150 300 C 190 260 230 210 280 160 C 320 118 355 80 380 50 L 380 420 Z" fill="rgba(255,255,255,0.015)"/>
-      {showTaken&&<><path d={route.paths.taken} stroke="rgba(74,140,106,0.2)" strokeWidth="10" fill="none" strokeLinecap="round"/><path d={route.paths.taken} stroke="#4a8c6a" strokeWidth={mode==="both"?2.5:3} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={mode==="both"?0.65:0.9}/></>}
-      {showBest&&<><path d={route.paths.best} stroke="rgba(212,168,83,0.18)" strokeWidth="10" fill="none" strokeLinecap="round"/><path d={route.paths.best} stroke="#d4a853" strokeWidth={mode==="both"?2.5:3} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={mode==="both"?0.85:0.95}/></>}
-      {route.pois.map((p,i)=>(
+      {showTaken && <>
+        <path d={route.paths.taken} stroke="rgba(74,140,106,0.2)" strokeWidth="10" fill="none" strokeLinecap="round"/>
+        <path d={route.paths.taken} stroke="#4a8c6a" strokeWidth={mode==="both"?2.5:3} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={mode==="both"?0.65:0.9}/>
+      </>}
+      {showBest && <>
+        <path d={route.paths.best} stroke="rgba(212,168,83,0.18)" strokeWidth="10" fill="none" strokeLinecap="round"/>
+        <path d={route.paths.best} stroke="#d4a853" strokeWidth={mode==="both"?2.5:3} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={mode==="both"?0.85:0.95}/>
+      </>}
+      {route.pois.map((p, i) => (
         <g key={i}>
           <circle cx={p.x} cy={p.y} r="12" fill={p.type==="start"?"rgba(74,140,106,0.12)":p.type==="peak"?"rgba(212,168,83,0.12)":"rgba(255,255,255,0.04)"}/>
           <circle cx={p.x} cy={p.y} r={p.type==="start"||p.type==="peak"?5:3.5} fill={p.type==="start"?"#4a8c6a":p.type==="peak"?"#d4a853":"#4a504d"} stroke="#090c0a" strokeWidth="1.5"/>
@@ -498,17 +422,20 @@ function RouteMapSVG({route,mode}) {
 }
 
 // ─── ROUTE DETAIL PANEL ───────────────────────────────────────────────────────
-function RouteDetailPanel({route,onClose}) {
-  const [mode,setMode]=useState("taken");
-  const data=mode==="best"?route.best:route.taken;
-  const isBetter=route.diff.time.startsWith("−")||route.diff.distance.startsWith("−");
+function RouteDetailPanel({ route, onClose }) {
+  const [mode, setMode] = useState("taken");
+  const data = mode === "best" ? route.best : route.taken;
+  const isBetter = route.diff.time.startsWith("−") || route.diff.distance.startsWith("−");
   return (
     <div className="route-detail-panel">
       <div className="route-detail-inner">
         <div className="route-info-pane">
           <div className="route-info-header">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"1.2rem"}}>
-              <div><div style={{fontFamily:"JetBrains Mono,monospace",fontSize:".58rem",letterSpacing:".14em",textTransform:"uppercase",color:"var(--accent)",marginBottom:".3rem"}}>{route.mode} · {route.region}</div><div style={{fontFamily:"Cormorant Garamond,serif",fontSize:"1.2rem",fontWeight:600,lineHeight:1.2}}>{route.title}</div></div>
+              <div>
+                <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:".58rem",letterSpacing:".14em",textTransform:"uppercase",color:"var(--accent)",marginBottom:".3rem"}}>{route.mode} · {route.region}</div>
+                <div style={{fontFamily:"Cormorant Garamond,serif",fontSize:"1.2rem",fontWeight:600,lineHeight:1.2}}>{route.title}</div>
+              </div>
               <button onClick={onClose} style={{background:"none",border:"1px solid var(--border)",color:"var(--ghost)",cursor:"pointer",width:28,height:28,borderRadius:"2px",fontSize:".8rem",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
             </div>
             <div className="route-mode-toggle">
@@ -527,7 +454,17 @@ function RouteDetailPanel({route,onClose}) {
           <div className="route-conditions"><div className="cond-title">Current Conditions</div>{route.conditions.map((c,i)=><div key={i} className="cond-item"><div className="cond-dot" style={{background:c.color}}/><span>{c.text}</span></div>)}</div>
           <div className="waypoints-list">
             <div className="wp-title">{mode==="taken"?"Waypoints — as walked":mode==="best"?"Waypoints — optimised":"All waypoints"}</div>
-            {data.waypoints.map((w,i)=><div key={i}><div className="wp-item"><div className="wp-badge" style={{background:i===0?"var(--pine-dim)":i===data.waypoints.length-1?"var(--accent-dim)":"var(--raised)",color:i===0?"var(--pine)":i===data.waypoints.length-1?"var(--accent)":"var(--ghost)",border:`1px solid ${i===0?"rgba(74,140,106,.3)":i===data.waypoints.length-1?"rgba(212,168,83,.3)":"var(--border)"}`}}>{i===0?"S":i===data.waypoints.length-1?"E":i}</div><div className="wp-name">{w}</div></div>{i<data.waypoints.length-1&&<div className="wp-connector"/>}</div>)}
+            {data.waypoints.map((w,i)=>(
+              <div key={i}>
+                <div className="wp-item">
+                  <div className="wp-badge" style={{background:i===0?"var(--pine-dim)":i===data.waypoints.length-1?"var(--accent-dim)":"var(--raised)",color:i===0?"var(--pine)":i===data.waypoints.length-1?"var(--accent)":"var(--ghost)",border:`1px solid ${i===0?"rgba(74,140,106,.3)":i===data.waypoints.length-1?"rgba(212,168,83,.3)":"var(--border)"}`}}>
+                    {i===0?"S":i===data.waypoints.length-1?"E":i}
+                  </div>
+                  <div className="wp-name">{w}</div>
+                </div>
+                {i<data.waypoints.length-1&&<div className="wp-connector"/>}
+              </div>
+            ))}
           </div>
         </div>
         <div className="route-map-pane">
@@ -543,44 +480,54 @@ function RouteDetailPanel({route,onClose}) {
   );
 }
 
-// ─── AI HOOK ─────────────────────────────────────────────────────────────────
+// ─── AI HOOK ──────────────────────────────────────────────────────────────────
 function useAI(editorContent) {
-  const [messages,setMessages]=useState([{role:"ai",text:"Welcome to your **AI writing partner**. I'm here to help you craft immersive travel stories — from atmospheric openings to evocative sensory details.",insertable:false}]);
-  const [inputVal,setInputVal]=useState("");
-  const [loading,setLoading]=useState(false);
-  const endRef=useRef(null);
-  useEffect(()=>{endRef.current?.scrollIntoView({behavior:"smooth"})},[messages,loading]);
-  const send=async(text)=>{
-    if(!text.trim()||loading)return;
-    setMessages(p=>[...p,{role:"user",text}]);setInputVal("");setLoading(true);
-    try{
-      const sys=`You are an elite travel writing assistant for "Meridian," a dark editorial travel magazine. Your style echoes Bruce Chatwin, Ryszard Kapuściński, and Colin Thubron — precise, evocative, literary. Current draft: "${editorContent.slice(0,400)}..."`;
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:[...messages.filter((_,i)=>i>0).map(m=>({role:m.role==="ai"?"assistant":"user",content:m.text})),{role:"user",content:text}]})});
-      const data=await res.json();
-      const reply=data.content?.[0]?.text||"Error — please retry.";
-      setMessages(p=>[...p,{role:"ai",text:reply,insertable:reply.length>120&&/write|paragraph|opening|blockquote|title|suggest|draft/i.test(text),rawText:reply}]);
-    }catch{setMessages(p=>[...p,{role:"ai",text:"Connection issue. Please try again.",insertable:false}]);}
+  const [messages, setMessages] = useState([{ role:"ai", text:"Welcome to your **AI writing partner**. I'm here to help you craft immersive travel stories — from atmospheric openings to evocative sensory details.", insertable:false }]);
+  const [inputVal, setInputVal] = useState("");
+  const [loading, setLoading] = useState(false);
+  const endRef = useRef(null);
+  useEffect(()=>{ endRef.current?.scrollIntoView({behavior:"smooth"}) }, [messages, loading]);
+
+  const send = async (text) => {
+    if (!text.trim() || loading) return;
+    setMessages(p => [...p, { role:"user", text }]);
+    setInputVal("");
+    setLoading(true);
+    try {
+      const sys = `You are an elite travel writing assistant for "Meridian," a dark editorial travel magazine. Your style echoes Bruce Chatwin, Ryszard Kapuściński, and Colin Thubron — precise, evocative, literary. Current draft: "${editorContent.slice(0,400)}..."`;
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:1000, system:sys, messages:[...messages.filter((_,i)=>i>0).map(m=>({role:m.role==="ai"?"assistant":"user",content:m.text})),{role:"user",content:text}] })
+      });
+      const data = await res.json();
+      const reply = data.content?.[0]?.text || "Error — please retry.";
+      setMessages(p => [...p, { role:"ai", text:reply, insertable:reply.length>120&&/write|paragraph|opening|blockquote|title|suggest|draft/i.test(text), rawText:reply }]);
+    } catch {
+      setMessages(p => [...p, { role:"ai", text:"Connection issue. Please try again.", insertable:false }]);
+    }
     setLoading(false);
   };
-  return{messages,inputVal,setInputVal,loading,send,endRef};
+  return { messages, inputVal, setInputVal, loading, send, endRef };
 }
 
 // ─── PHOTO JOURNAL PAGE ───────────────────────────────────────────────────────
-function JournalPage({onNav}) {
-  const [activeFilter,setActiveFilter]=useState("All");
-  const [lightboxIdx,setLightboxIdx]=useState(null);
-  const filters=["All","Patagonia","Japan","Morocco","Iceland","India","Vietnam","Ethiopia","Portugal"];
-  const filtered=activeFilter==="All"?PHOTOS:PHOTOS.filter(p=>p.tag===activeFilter);
+function JournalPage({ onNav }) {
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [lightboxIdx, setLightboxIdx] = useState(null);
+  const filters = ["All", ...Array.from(new Set(PHOTOS.map(p => p.tag)))];
+  const filtered = activeFilter === "All" ? PHOTOS : PHOTOS.filter(p => p.tag === activeFilter);
 
-  const openLightbox=(i)=>setLightboxIdx(i);
-  const closeLightbox=()=>setLightboxIdx(null);
-  const prevPhoto=()=>setLightboxIdx(i=>i>0?i-1:filtered.length-1);
-  const nextPhoto=()=>setLightboxIdx(i=>i<filtered.length-1?i+1:0);
-
-  useEffect(()=>{
-    const handle=(e)=>{if(lightboxIdx===null)return;if(e.key==="Escape")closeLightbox();if(e.key==="ArrowLeft")prevPhoto();if(e.key==="ArrowRight")nextPhoto();};
-    window.addEventListener("keydown",handle);return()=>window.removeEventListener("keydown",handle);
-  },[lightboxIdx,filtered.length]);
+  useEffect(() => {
+    const handle = (e) => {
+      if (lightboxIdx === null) return;
+      if (e.key === "Escape") setLightboxIdx(null);
+      if (e.key === "ArrowLeft") setLightboxIdx(i => i > 0 ? i-1 : filtered.length-1);
+      if (e.key === "ArrowRight") setLightboxIdx(i => i < filtered.length-1 ? i+1 : 0);
+    };
+    window.addEventListener("keydown", handle);
+    return () => window.removeEventListener("keydown", handle);
+  }, [lightboxIdx, filtered.length]);
 
   return (
     <div className="journal-page page">
@@ -591,15 +538,14 @@ function JournalPage({onNav}) {
           <p style={{fontFamily:"Cormorant Garamond,serif",fontSize:"1rem",color:"var(--muted)",maxWidth:"48ch",lineHeight:1.8}}>Raw photographs from the field. Every trip produces hundreds of images that inform the writing but never appear in print. These are the ones I keep anyway.</p>
         </div>
         <div className="journal-filters">
-          {filters.map(f=><button key={f} className={`filter-chip ${activeFilter===f?"active":""}`} onClick={()=>setActiveFilter(f)}>{f}</button>)}
+          {filters.map(f => <button key={f} className={`filter-chip ${activeFilter===f?"active":""}`} onClick={()=>setActiveFilter(f)}>{f}</button>)}
         </div>
       </div>
-
       <div style={{padding:"3px",background:"var(--void)"}}>
         <div className="journal-grid">
-          {filtered.map((photo,i)=>(
-            <div key={photo.id} className="journal-item" onClick={()=>openLightbox(i)}>
-              <div className="journal-img-el" style={{background:photo.bg,height:photo.tall?"420px":"260px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"5rem",position:"relative"}}>
+          {filtered.map((photo, i) => (
+            <div key={photo.id} className="journal-item" onClick={()=>setLightboxIdx(i)}>
+              <div className="journal-img-el" style={{background:photo.bg,height:photo.tall?"420px":"260px",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
                 <span style={{fontSize:photo.tall?"6rem":"4rem",filter:"drop-shadow(0 4px 20px rgba(0,0,0,.5))"}}>{photo.emoji}</span>
                 <div className="journal-overlay">
                   <div className="journal-overlay-tag">{photo.tag} · {photo.date}</div>
@@ -611,12 +557,10 @@ function JournalPage({onNav}) {
           ))}
         </div>
       </div>
-
-      {/* Lightbox */}
-      {lightboxIdx!==null&&(
-        <div className="lightbox" onClick={closeLightbox}>
+      {lightboxIdx !== null && (
+        <div className="lightbox" onClick={()=>setLightboxIdx(null)}>
           <div className="lightbox-inner" onClick={e=>e.stopPropagation()}>
-            <button className="lightbox-close" onClick={closeLightbox}>✕ Close</button>
+            <button className="lightbox-close" onClick={()=>setLightboxIdx(null)}>✕ Close</button>
             <div style={{background:filtered[lightboxIdx].bg,borderRadius:"1px",height:"520px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"8rem",position:"relative"}}>
               <span style={{filter:"drop-shadow(0 8px 40px rgba(0,0,0,.6))"}}>{filtered[lightboxIdx].emoji}</span>
               <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"1.5rem",background:"linear-gradient(to top,rgba(0,0,0,.8),transparent)"}}>
@@ -628,14 +572,13 @@ function JournalPage({onNav}) {
               <div className="lightbox-info"><div>{filtered[lightboxIdx].meta}</div><div>{filtered[lightboxIdx].date}</div></div>
             </div>
             <div className="lightbox-nav">
-              <button className="lnav-btn" onClick={prevPhoto}>← Prev</button>
+              <button className="lnav-btn" onClick={()=>setLightboxIdx(i=>i>0?i-1:filtered.length-1)}>← Prev</button>
               <span style={{fontFamily:"JetBrains Mono,monospace",fontSize:".6rem",color:"var(--ghost)",padding:".5rem 1rem"}}>{lightboxIdx+1} / {filtered.length}</span>
-              <button className="lnav-btn" onClick={nextPhoto}>Next →</button>
+              <button className="lnav-btn" onClick={()=>setLightboxIdx(i=>i<filtered.length-1?i+1:0)}>Next →</button>
             </div>
           </div>
         </div>
       )}
-
       <div style={{padding:"3rem",borderTop:"1px solid var(--border)",background:"var(--deep)",display:"flex",gap:"1.5rem",alignItems:"center"}}>
         <div style={{fontFamily:"Cormorant Garamond,serif",fontSize:"1rem",color:"var(--muted)",maxWidth:"52ch",lineHeight:1.7}}>All photographs shot on a Sony A7 IV. No presets, no AI upscaling. RAW files processed in Lightroom, exported at full resolution.</div>
         <div style={{marginLeft:"auto",display:"flex",gap:"1rem",flexShrink:0}}>
@@ -647,15 +590,14 @@ function JournalPage({onNav}) {
   );
 }
 
-// ─── SOCIAL STORIES PAGE ─────────────────────────────────────────────────────
-function SocialPage({onOpenPost}) {
-  const [platform,setPlatform]=useState("all");
-  const filtered=platform==="all"?SOCIAL_POSTS:SOCIAL_POSTS.filter(p=>p.platform===platform);
-  const featured=SOCIAL_POSTS.find(p=>p.featured);
-
-  const platformColors={ig:"var(--ig)",tw:"var(--tw)",yt:"var(--yt)"};
-  const platformLabels={ig:"Instagram",tw:"Twitter / X",yt:"YouTube"};
-  const platformIcons={ig:"📸",tw:"🐦",yt:"▶"};
+// ─── SOCIAL PAGE ─────────────────────────────────────────────────────────────
+function SocialPage({ onOpenPost }) {
+  const [platform, setPlatform] = useState("all");
+  const filtered = platform === "all" ? SOCIAL_POSTS : SOCIAL_POSTS.filter(p => p.platform === platform);
+  const featured = SOCIAL_POSTS.find(p => p.featured);
+  const platformColors = { ig:"var(--ig)", tw:"var(--tw)", yt:"var(--yt)" };
+  const platformLabels = { ig:"Instagram", tw:"Twitter / X", yt:"YouTube" };
+  const platformIcons  = { ig:"📸", tw:"🐦", yt:"▶" };
 
   return (
     <div className="social-page page">
@@ -675,49 +617,32 @@ function SocialPage({onOpenPost}) {
           </div>
         </div>
       </div>
-
-      {/* Stats bar */}
       <div className="social-stats-bar">
-        {[{icon:"📸",platform:"ig",val:"42.8K",label:"Instagram Followers"},{icon:"𝕏",platform:"tw",val:"18.4K",label:"Twitter Followers"},{icon:"▶",platform:"yt",val:"31.2K",label:"YouTube Subscribers"},{icon:"❤️",platform:"all",val:"820K",label:"Total Engagements"}].map(s=>(
+        {[{icon:"📸",val:"42.8K",label:"Instagram Followers"},{icon:"𝕏",val:"18.4K",label:"Twitter Followers"},{icon:"▶",val:"31.2K",label:"YouTube Subscribers"},{icon:"❤️",val:"820K",label:"Total Engagements"}].map(s=>(
           <div key={s.label} className="social-stat">
             <div className="social-stat-icon">{s.icon}</div>
             <div><div className="social-stat-val">{s.val}</div><div className="social-stat-label">{s.label}</div></div>
           </div>
         ))}
       </div>
-
-      {/* Featured post */}
-      {featured&&(platform==="all"||platform===featured.platform)&&(
+      {featured && (platform==="all"||platform===featured.platform) && (
         <div className="social-featured">
           <div className="sf-visual" style={{background:featured.bg}}>
             <div style={{position:"absolute",inset:0,color:"var(--accent)",opacity:.06}}><GeoSVG/></div>
             <span style={{position:"relative",zIndex:2,fontSize:"8rem",filter:"drop-shadow(0 8px 40px rgba(0,0,0,.6))"}}>{featured.emoji}</span>
           </div>
           <div className="sf-content">
-            <div className="sf-badge" style={{color:platformColors[featured.platform]}}>
-              <span>{platformIcons[featured.platform]}</span>
-              <span>{platformLabels[featured.platform]}</span>
-              <span style={{color:"var(--ghost)",marginLeft:".3rem"}}>· Top post</span>
-            </div>
+            <div className="sf-badge" style={{color:platformColors[featured.platform]}}><span>{platformIcons[featured.platform]}</span><span>{platformLabels[featured.platform]}</span><span style={{color:"var(--ghost)",marginLeft:".3rem"}}>· Top post</span></div>
             <div className="sf-title">"{featured.text.slice(0,80)}…"</div>
             <div className="sf-text">{featured.text}</div>
-            <div className="sf-numbers">
-              <div className="sf-num-item"><strong>{featured.likes}</strong>Likes</div>
-              <div className="sf-num-item"><strong>{featured.comments}</strong>Comments</div>
-            </div>
-            <div style={{display:"flex",gap:".8rem",flexWrap:"wrap"}}>
-              {featured.hashtags.map(h=><span key={h} className="sc-hashtag">{h}</span>)}
-            </div>
-            <div style={{marginTop:"1.5rem",display:"flex",gap:"1rem"}}>
-              <button className="btn-gold" onClick={()=>onOpenPost(POSTS.find(p=>p.id===featured.linkedPost))}>Read the full dispatch</button>
-            </div>
+            <div className="sf-numbers"><div className="sf-num-item"><strong>{featured.likes}</strong>Likes</div><div className="sf-num-item"><strong>{featured.comments}</strong>Comments</div></div>
+            <div style={{display:"flex",gap:".8rem",flexWrap:"wrap"}}>{featured.hashtags.map(h=><span key={h} className="sc-hashtag">{h}</span>)}</div>
+            <div style={{marginTop:"1.5rem"}}><button className="btn-gold" onClick={()=>onOpenPost(POSTS.find(p=>p.id===featured.linkedPost))}>Read the full dispatch</button></div>
           </div>
         </div>
       )}
-
-      {/* Feed grid */}
       <div className="social-feed">
-        {filtered.filter(p=>!p.featured||(platform!=="all"&&platform!==p.platform)).concat(filtered.filter(p=>p.featured)).map(post=>(
+        {filtered.map(post=>(
           <div key={post.id} className="social-card">
             <div className="sc-media-wrap">
               <div className="sc-media" style={{background:post.bg}}>{post.emoji}</div>
@@ -728,10 +653,7 @@ function SocialPage({onOpenPost}) {
               <div className="sc-text">{post.text.length>140?post.text.slice(0,140)+"…":post.text}</div>
               <div className="sc-hashtags">{post.hashtags.map(h=><span key={h} className="sc-hashtag">{h}</span>)}</div>
               <div className="sc-footer">
-                <div className="sc-engagement">
-                  <span>❤ {post.likes}</span>
-                  <span>💬 {post.comments}</span>
-                </div>
+                <div className="sc-engagement"><span>❤ {post.likes}</span><span>💬 {post.comments}</span></div>
                 <div style={{display:"flex",gap:".5rem",alignItems:"center"}}>
                   <span className="sc-date">{post.date}</span>
                   <button className="sc-blog-link" onClick={()=>onOpenPost(POSTS.find(p=>p.id===post.linkedPost))}>Read post →</button>
@@ -741,7 +663,6 @@ function SocialPage({onOpenPost}) {
           </div>
         ))}
       </div>
-
       <div style={{padding:"2.5rem 3rem",borderTop:"1px solid var(--border)",background:"var(--deep)",fontFamily:"JetBrains Mono,monospace",fontSize:".6rem",color:"var(--ghost)"}}>
         Social metrics shown are illustrative. Each post links to the full Meridian dispatch that inspired it.
       </div>
@@ -750,9 +671,22 @@ function SocialPage({onOpenPost}) {
 }
 
 // ─── ABOUT ME PAGE ────────────────────────────────────────────────────────────
-function AboutPage({onNav}) {
-  const gear=[{name:"Sony A7 IV",desc:"Primary body — mirrorless, 33MP",cat:"Camera"},{name:"24–70mm f/2.8 GM",desc:"My one-lens compromise",cat:"Lens"},{name:"Osprey Aether 65",desc:"For anything over 5 nights",cat:"Pack"},{name:"Garmin inReach Mini 2",desc:"Satellite comms off-grid",cat:"Safety"},{name:"Moleskine Cahier",desc:"Notes before they evaporate",cat:"Writing"},{name:"MacBook Air M3",desc:"Edit anywhere. Needs no fan.",cat:"Tech"}];
-  const places=[{flag:"🇦🇷",name:"Patagonia",year:"2025"},{flag:"🇯🇵",name:"Kyoto",year:"2025"},{flag:"🇲🇦",name:"Fes",year:"2025"},{flag:"🇮🇸",name:"Iceland",year:"2024"},{flag:"🇮🇳",name:"Old Delhi",year:"2024"},{flag:"🇪🇹",name:"Addis Ababa",year:"2024"},{flag:"🇻🇳",name:"Hanoi",year:"2023"},{flag:"🇵🇹",name:"Lisbon",year:"2023"},{flag:"🇵🇪",name:"Cusco",year:"2023"},{flag:"🇬🇪",name:"Tbilisi",year:"2022"}];
+function AboutPage({ onNav }) {
+  const gear = [
+    { name:"Sony A7 IV",         desc:"Primary body — mirrorless, 33MP",  cat:"Camera"  },
+    { name:"24–70mm f/2.8 GM",   desc:"My one-lens compromise",           cat:"Lens"    },
+    { name:"Osprey Aether 65",   desc:"For anything over 5 nights",       cat:"Pack"    },
+    { name:"Garmin inReach Mini 2", desc:"Satellite comms off-grid",      cat:"Safety"  },
+    { name:"Moleskine Cahier",   desc:"Notes before they evaporate",      cat:"Writing" },
+    { name:"MacBook Air M3",     desc:"Edit anywhere. Needs no fan.",      cat:"Tech"    },
+  ];
+  const places = [
+    {flag:"🇦🇷",name:"Patagonia",year:"2025"},{flag:"🇯🇵",name:"Kyoto",year:"2025"},
+    {flag:"🇲🇦",name:"Fes",year:"2025"},{flag:"🇮🇸",name:"Iceland",year:"2024"},
+    {flag:"🇮🇳",name:"Old Delhi",year:"2024"},{flag:"🇪🇹",name:"Addis Ababa",year:"2024"},
+    {flag:"🇻🇳",name:"Hanoi",year:"2023"},{flag:"🇵🇹",name:"Lisbon",year:"2023"},
+    {flag:"🇵🇪",name:"Cusco",year:"2023"},{flag:"🇬🇪",name:"Tbilisi",year:"2022"},
+  ];
   return (
     <div className="page">
       <div className="about-hero">
@@ -769,7 +703,9 @@ function AboutPage({onNav}) {
         </div>
       </div>
       <div className="about-stats-bar">
-        {[["38+","Countries Visited"],["6 yr","Writing Full-Time"],["120+","Published Dispatches"],["0","Sponsored Posts"]].map(([n,l])=><div key={l} className="about-stat"><div className="about-stat-num" style={{fontSize:n.length>4?"2rem":"3rem"}}>{n}</div><div className="about-stat-label">{l}</div></div>)}
+        {[["38+","Countries Visited"],["6 yr","Writing Full-Time"],["120+","Published Dispatches"],["0","Sponsored Posts"]].map(([n,l])=>(
+          <div key={l} className="about-stat"><div className="about-stat-num" style={{fontSize:n.length>4?"2rem":"3rem"}}>{n}</div><div className="about-stat-label">{l}</div></div>
+        ))}
       </div>
       <div className="about-body">
         <div className="about-col">
@@ -797,7 +733,7 @@ function AboutPage({onNav}) {
 
 // ─── ROUTES PAGE ──────────────────────────────────────────────────────────────
 function RoutesPage() {
-  const [activeRoute,setActiveRoute]=useState(null);
+  const [activeRoute, setActiveRoute] = useState(null);
   return (
     <div className="routes-page page">
       <div className="routes-hero">
@@ -828,7 +764,7 @@ function RoutesPage() {
         </div>
       ))}
       <div style={{padding:"2.5rem 3rem",borderTop:"1px solid var(--border)",background:"var(--deep)",display:"flex",gap:"2rem",alignItems:"center"}}>
-        <p style={{fontFamily:"Cormorant Garamond,serif",fontSize:".95rem",color:"var(--muted)",maxWidth:"52ch",lineHeight:1.7}}>Route data sourced from Mapbox Traffic, CONAF trail conditions (Patagonia), Kyoto Municipal Tourism, and Morocco ONT. Best routes update when conditions change.</p>
+        <p style={{fontFamily:"Cormorant Garamond,serif",fontSize:".95rem",color:"var(--muted)",maxWidth:"52ch",lineHeight:1.7}}>Route data sourced from Mapbox Traffic, CONAF trail conditions (Patagonia), Kyoto Municipal Tourism, and Morocco ONT.</p>
         <div style={{marginLeft:"auto",fontFamily:"JetBrains Mono,monospace",fontSize:".6rem",color:"var(--ghost)",textAlign:"right",flexShrink:0}}><div>Last updated</div><div style={{color:"var(--accent)",marginTop:".2rem"}}>Apr 22, 2025</div></div>
       </div>
     </div>
@@ -837,39 +773,66 @@ function RoutesPage() {
 
 // ─── WRITER PAGE ──────────────────────────────────────────────────────────────
 function WriterPage() {
-  const [title,setTitle]=useState("");const [body,setBody]=useState("");const [selTags,setSelTags]=useState([]);const [pub,setPub]=useState(false);
-  const tags=["Adventure","Culture","Food","Photography","Solo Travel","Budget","Luxury","Trekking","Cities","Islands"];
-  const ai=useAI(body);
-  const toggleTag=(t)=>setSelTags(p=>p.includes(t)?p.filter(x=>x!==t):[...p,t]);
-  const insertText=(t)=>setBody(p=>p+(p?"\n\n":"")+t);
-  if(pub)return(<div className="page" style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"calc(100vh - 60px)",flexDirection:"column",gap:"1.5rem",padding:"2rem",textAlign:"center"}}><div style={{fontSize:"3rem"}}>✦</div><h2 style={{fontFamily:"Cormorant Garamond,serif",fontSize:"2.5rem",fontWeight:300}}>Dispatch published.</h2><p style={{color:"var(--muted)",maxWidth:"36ch",fontFamily:"Cormorant Garamond,serif",fontSize:"1.1rem"}}>Your story has been sent into the world. The best ones always find their readers.</p></div>);
+  const [title, setTitle] = useState("");
+  const [body, setBody]   = useState("");
+  const [selTags, setSelTags] = useState([]);
+  const [pub, setPub] = useState(false);
+  const tags = ["Adventure","Culture","Food","Photography","Solo Travel","Budget","Luxury","Trekking","Cities","Islands"];
+  const ai = useAI(body);
+  const toggleTag = (t) => setSelTags(p => p.includes(t) ? p.filter(x=>x!==t) : [...p,t]);
+  const insertText = (t) => setBody(p => p + (p?"\n\n":"") + t);
+
+  if (pub) return (
+    <div className="page" style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"calc(100vh - 60px)",flexDirection:"column",gap:"1.5rem",padding:"2rem",textAlign:"center"}}>
+      <div style={{fontSize:"3rem"}}>✦</div>
+      <h2 style={{fontFamily:"Cormorant Garamond,serif",fontSize:"2.5rem",fontWeight:300}}>Dispatch published.</h2>
+      <p style={{color:"var(--muted)",maxWidth:"36ch",fontFamily:"Cormorant Garamond,serif",fontSize:"1.1rem"}}>Your story has been sent into the world. The best ones always find their readers.</p>
+    </div>
+  );
+
   return (
     <div className="writer-page page">
-      <div className="writer-header"><div className="writer-label"><span>New Dispatch</span><span className="ai-badge">AI ASSISTED</span></div><h1 className="writer-title">Compose your story</h1></div>
+      <div className="writer-header">
+        <div className="writer-label"><span>New Dispatch</span><span className="ai-badge">AI ASSISTED</span></div>
+        <h1 className="writer-title">Compose your story</h1>
+      </div>
       <div className="writer-body">
         <div className="editor-pane">
           <div><div className="editor-field-label">Title</div><input className="editor-input title" placeholder="Give your dispatch a name…" value={title} onChange={e=>setTitle(e.target.value)}/></div>
           <div><div className="editor-field-label">Tags</div><div className="tag-row">{tags.map(t=><span key={t} className={`tag-chip ${selTags.includes(t)?"selected":""}`} onClick={()=>toggleTag(t)}>{t}</span>)}</div></div>
           <div style={{flex:1}}><div className="editor-field-label">Body</div><textarea className="editor-textarea" placeholder="Begin your story here…" value={body} onChange={e=>setBody(e.target.value)} style={{minHeight:"380px"}}/></div>
-          <div className="editor-actions"><button className="btn-publish" onClick={()=>{if(title&&body)setPub(true)}}>Publish dispatch</button><button className="btn-save">Save draft</button></div>
+          <div className="editor-actions">
+            <button className="btn-publish" onClick={()=>{if(title&&body)setPub(true)}}>Publish dispatch</button>
+            <button className="btn-save">Save draft</button>
+          </div>
         </div>
         <div className="ai-pane">
-          <div className="ai-pane-header"><div className="ai-pane-title"><div className="ai-status-dot"/>Writing Assistant</div><span style={{fontFamily:"JetBrains Mono,monospace",fontSize:".58rem",color:"var(--ghost)"}}>Meridian AI</span></div>
+          <div className="ai-pane-header">
+            <div className="ai-pane-title"><div className="ai-status-dot"/>Writing Assistant</div>
+            <span style={{fontFamily:"JetBrains Mono,monospace",fontSize:".58rem",color:"var(--ghost)"}}>Meridian AI</span>
+          </div>
           <div className="ai-messages">
             {ai.messages.map((msg,i)=>(
               <div key={i} className={`msg ${msg.role}`}>
                 <div className={`msg-avatar ${msg.role}`}>{msg.role==="ai"?"M":"You"}</div>
-                <div><div className="msg-bubble" dangerouslySetInnerHTML={{__html:msg.text.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br/>")}}/>
-                {msg.insertable&&<button className="insert-btn" onClick={()=>insertText(msg.rawText)}>↑ Insert into draft</button>}</div>
+                <div>
+                  <div className="msg-bubble" dangerouslySetInnerHTML={{__html:msg.text.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>").replace(/\n/g,"<br/>")}}/>
+                  {msg.insertable&&<button className="insert-btn" onClick={()=>insertText(msg.rawText)}>↑ Insert into draft</button>}
+                </div>
               </div>
             ))}
             {ai.loading&&<div className="msg ai"><div className="msg-avatar ai">M</div><div className="ai-typing"><span/><span/><span/></div></div>}
             <div ref={ai.endRef}/>
           </div>
-          <div className="ai-prompts"><div className="ai-prompts-label">Quick prompts</div>{QUICK_PROMPTS.map((p,i)=><button key={i} className="quick-prompt" onClick={()=>ai.send(p)}>{p}</button>)}</div>
+          <div className="ai-prompts">
+            <div className="ai-prompts-label">Quick prompts</div>
+            {QUICK_PROMPTS.map((p,i)=><button key={i} className="quick-prompt" onClick={()=>ai.send(p)}>{p}</button>)}
+          </div>
           <div className="ai-input-row">
             <textarea className="ai-input" rows={1} placeholder="Ask your writing assistant…" value={ai.inputVal} onChange={e=>ai.setInputVal(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();ai.send(ai.inputVal)}}}/>
-            <button className="ai-send-btn" onClick={()=>ai.send(ai.inputVal)} disabled={ai.loading||!ai.inputVal.trim()}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+            <button className="ai-send-btn" onClick={()=>ai.send(ai.inputVal)} disabled={ai.loading||!ai.inputVal.trim()}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
           </div>
         </div>
       </div>
@@ -878,7 +841,7 @@ function WriterPage() {
 }
 
 // ─── POST COMPONENTS ──────────────────────────────────────────────────────────
-function PostCard({post,featured,onClick}) {
+function PostCard({ post, featured, onClick }) {
   return (
     <div className={`post-cell ${featured?"featured":""}`} onClick={onClick}>
       <div className="post-cell-bg" style={{background:post.gradient}}/>
@@ -892,17 +855,28 @@ function PostCard({post,featured,onClick}) {
     </div>
   );
 }
-function PostDetail({post,onBack}) {
+
+function PostDetail({ post, onBack }) {
   return (
     <div className="page">
       <div className="post-detail-hero" style={{background:post.gradient}}>
         <div style={{position:"absolute",inset:0,color:"white",opacity:.06}}><GeoSVG/></div>
-        <div style={{position:"relative",zIndex:2}}><div className="post-detail-tag">{post.tag}</div><h1 className="post-detail-title">{post.title}</h1></div>
+        <div style={{position:"relative",zIndex:2}}>
+          <div className="post-detail-tag">{post.tag}</div>
+          <h1 className="post-detail-title">{post.title}</h1>
+        </div>
       </div>
       <div className="post-detail-content">
         <button className="back-btn" onClick={onBack}>← Back to stories</button>
         <div className="post-detail-meta"><span>✍ {post.author}</span><span>📅 {post.date}</span><span>⏱ {post.readTime} read</span></div>
-        <div className="post-body">{post.body.map((b,i)=>{if(b.type==="p")return<p key={i}>{b.text}</p>;if(b.type==="h2")return<h2 key={i}>{b.text}</h2>;if(b.type==="blockquote")return<blockquote key={i}>{b.text}</blockquote>;return null;})}</div>
+        <div className="post-body">
+          {post.body.map((b,i)=>{
+            if(b.type==="p") return <p key={i}>{b.text}</p>;
+            if(b.type==="h2") return <h2 key={i}>{b.text}</h2>;
+            if(b.type==="blockquote") return <blockquote key={i}>{b.text}</blockquote>;
+            return null;
+          })}
+        </div>
       </div>
     </div>
   );
@@ -910,20 +884,21 @@ function PostDetail({post,onBack}) {
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [page,setPage]=useState("home");
-  const [selectedPost,setSelectedPost]=useState(null);
-  const [cursorPos,setCursorPos]=useState({x:-100,y:-100});
-  const [hovering,setHovering]=useState(false);
+  const [page, setPage] = useState("home");
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [cursorPos, setCursorPos] = useState({ x:-100, y:-100 });
+  const [hovering, setHovering] = useState(false);
 
-  useEffect(()=>{
-    const move=(e)=>setCursorPos({x:e.clientX,y:e.clientY});
-    const over=(e)=>setHovering(!!e.target.closest("button,a,.post-cell,.route-row,.dest-card,.article-col,.quick-prompt,.social-pill,.journal-item,.social-card,.filter-chip,.platform-tab,.toggle-opt"));
-    window.addEventListener("mousemove",move);window.addEventListener("mouseover",over);
-    return()=>{window.removeEventListener("mousemove",move);window.removeEventListener("mouseover",over)};
-  },[]);
+  useEffect(() => {
+    const move = (e) => setCursorPos({ x:e.clientX, y:e.clientY });
+    const over  = (e) => setHovering(!!e.target.closest("button,a,.post-cell,.route-row,.dest-card,.article-col,.quick-prompt,.social-pill,.journal-item,.social-card,.filter-chip,.platform-tab,.toggle-opt"));
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseover", over);
+    return () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseover", over); };
+  }, []);
 
-  const nav=(p)=>{setPage(p);setSelectedPost(null);window.scrollTo(0,0)};
-  const openPost=(post)=>{if(post){setSelectedPost(post);setPage("post");window.scrollTo(0,0)}};
+  const nav = (p) => { setPage(p); setSelectedPost(null); window.scrollTo(0,0); };
+  const openPost = (post) => { if(post){ setSelectedPost(post); setPage("post"); window.scrollTo(0,0); } };
 
   return (
     <>
@@ -944,14 +919,17 @@ export default function App() {
         </div>
       </div>
 
-      {page==="home"&&(
+      {page==="home" && (
         <div className="page">
           <div className="hero">
             <div className="hero-left">
               <div className="hero-issue">Issue 12 · April 2025</div>
               <h1 className="hero-headline">The world, <em>written</em> from inside it</h1>
               <p className="hero-sub">Dispatches from writers who go where the story is. No itineraries. No hotel partnerships. Just the place, faithfully rendered.</p>
-              <div className="hero-cta"><button className="btn-gold" onClick={()=>nav("destinations")}>Browse Destinations</button><button className="btn-ghost" onClick={()=>nav("journal")}>Photo Journal</button></div>
+              <div className="hero-cta">
+                <button className="btn-gold" onClick={()=>nav("destinations")}>Browse Destinations</button>
+                <button className="btn-ghost" onClick={()=>nav("journal")}>Photo Journal</button>
+              </div>
             </div>
             <div className="hero-right">
               <div className="hero-featured-img"><div className="hero-geo" style={{color:"#d4a853"}}><GeoSVG/></div></div>
@@ -982,7 +960,6 @@ export default function App() {
               ))}
             </div>
           </div>
-          {/* Social teaser strip */}
           <div style={{borderTop:"1px solid var(--border)",background:"var(--deep)",padding:"2.5rem 3rem",display:"flex",alignItems:"center",justifyContent:"space-between",gap:"2rem",flexWrap:"wrap"}}>
             <div>
               <div style={{fontFamily:"JetBrains Mono,monospace",fontSize:".6rem",letterSpacing:".18em",textTransform:"uppercase",color:"var(--accent)",marginBottom:".5rem"}}>Also on social</div>
@@ -996,14 +973,14 @@ export default function App() {
         </div>
       )}
 
-      {page==="post"&&selectedPost&&<PostDetail post={selectedPost} onBack={()=>nav("home")}/>}
-      {page==="journal"&&<JournalPage onNav={nav}/>}
-      {page==="social"&&<SocialPage onOpenPost={openPost}/>}
-      {page==="routes"&&<RoutesPage/>}
-      {page==="about"&&<AboutPage onNav={nav}/>}
-      {page==="write"&&<WriterPage/>}
+      {page==="post"         && selectedPost && <PostDetail post={selectedPost} onBack={()=>nav("home")}/>}
+      {page==="journal"      && <JournalPage onNav={nav}/>}
+      {page==="social"       && <SocialPage onOpenPost={openPost}/>}
+      {page==="routes"       && <RoutesPage/>}
+      {page==="about"        && <AboutPage onNav={nav}/>}
+      {page==="write"        && <WriterPage/>}
 
-      {page==="destinations"&&(
+      {page==="destinations" && (
         <div className="page" style={{paddingTop:"60px"}}>
           <div className="section"><div className="section-rule"><div className="section-label">Destinations</div><div className="section-line"/><div className="section-count">{DESTINATIONS.length} regions</div></div></div>
           <div className="destinations-grid">
