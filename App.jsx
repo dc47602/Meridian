@@ -915,7 +915,6 @@ export default function App() {
           <button className={`nav-link ${page==="routes"?"active":""}`} onClick={()=>nav("routes")}>Routes</button>
           <button className={`nav-link ${page==="destinations"?"active":""}`} onClick={()=>nav("destinations")}>Destinations</button>
           <button className={`nav-link ${page==="about"?"active":""}`} onClick={()=>nav("about")}>About Me</button>
-          <button className="nav-write-btn" onClick={()=>nav("write")}>Write ✦</button>
         </div>
       </div>
 
@@ -978,7 +977,6 @@ export default function App() {
       {page==="social"       && <SocialPage onOpenPost={openPost}/>}
       {page==="routes"       && <RoutesPage/>}
       {page==="about"        && <AboutPage onNav={nav}/>}
-      {page==="write"        && <WriterPage/>}
 
       {page==="destinations" && (
         <div className="page" style={{paddingTop:"60px"}}>
